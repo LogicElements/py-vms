@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyvms"
+description = "Python module for Vibration Monitoring System by Logic Elements"
+version = "0.1.1"
+authors = [
+  { name="Jan Bartovský", email="jan.bartovsky@logicelements.cz" },
+]
+readme = "README.md"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ["logicelements", "vibration", "vms"]
+
+
+requires-python = ">=3.7"
+dependencies = [
+    "pyserial",
+    'mysql-connector',
+    "unittest-xml-reporting"]
+
+[tool.setuptools.packages.find]
+# scanning for namespace packages is true by default in pyproject.toml, so
+# you do NOT need to include the following line.
+namespaces = true
+where = ["src"]
+
+[tool.setuptools]
+include-package-data = true
+
+#[tool.setuptools.package-data]
+#"lecore.Devices.RtdEmul" = ["*.json"]
+#"lecore.Devices.VmsRtd" = ["*.json"]
+#"lecore.Devices.PhaseDet" = ["*.json"]
+#"lecore.Devices.Rftb" = ["*.json"]
+
+[project.urls]
+"Homepage" = "https://github.com/LogicElements/py-vms"

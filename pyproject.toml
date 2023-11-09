@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyvms"
 description = "Python module for Vibration Monitoring System by Logic Elements"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
   { name="Jan Bartovský", email="jan.bartovsky@logicelements.cz" },
 ]
@@ -24,6 +24,11 @@ dependencies = [
     "pyserial",
     'mysql-connector',
     "unittest-xml-reporting"]
+
+[project.optional-dependencies]
+extra = [
+  "matplotlib",
+]
 
 [tool.setuptools.packages.find]
 # scanning for namespace packages is true by default in pyproject.toml, so

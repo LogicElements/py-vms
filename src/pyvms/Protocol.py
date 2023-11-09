@@ -1,7 +1,7 @@
 import struct
 import logging
 import math
-from Buildtools.crc32 import *
+from .Crc32 import *
 
 
 class Protocol:

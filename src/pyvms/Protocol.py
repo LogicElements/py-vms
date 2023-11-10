@@ -91,7 +91,8 @@ class Protocol:
             return self._parse_logger(data[16:], stats)
         return False
 
-    def check_length(self, data):
+    @staticmethod
+    def check_length(data):
         """
         Check length of received packet based on packet length in header
         :param data: Packet data
@@ -105,7 +106,8 @@ class Protocol:
             return False
         return True
 
-    def get_length(self, data):
+    @staticmethod
+    def get_length(data):
         """
         Get length of received packet at zero offset
         :param data: Data buffer for reception
@@ -219,7 +221,8 @@ class Protocol:
         head += bytearray([packet, self.id % 256])
         return head
 
-    def _parse_master(self, payload):
+    @staticmethod
+    def _parse_master(payload):
         """
         Parse payload of configuration packet
         :param payload: Payload to parse
@@ -233,7 +236,14 @@ class Protocol:
             return ret[0]
         return ret
 
-    def _parse_timestamp(self, payload, stats=None):
+    @staticmethod
+    def _parse_timestamp(payload, stats=None):
+        """
+        Parse packet containing timestamp data
+        :param payload: Packet
+        :param stats: Object of timestamp statistics
+        :return: True if received packet has correct length
+        """
         idx = payload[0]
         flags = payload[1]
         blades = struct.unpack("<H", payload[14:16])[0]
@@ -247,7 +257,14 @@ class Protocol:
             return True
         return None
 
-    def _parse_logger(self, payload, stats=None):
+    @staticmethod
+    def _parse_logger(payload, stats=None):
+        """
+        Parse packet containing logger data
+        :param payload: Packet
+        :param stats: Object of timestamp statistics
+        :return: True if received packet has correct length
+        """
         idx = payload[0]
         flags = payload[1]
         nb_data = struct.unpack("<H", payload[2:4])[0]

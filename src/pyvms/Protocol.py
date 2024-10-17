@@ -49,7 +49,7 @@ class Protocol:
         self.in_progress = 0
         self.crc = 0
 
-    def parse_resp(self, resp):
+    def parse_config(self, resp):
         """
         Parse received response on configuration socket
         :param resp: Received response packet
@@ -78,6 +78,12 @@ class Protocol:
         return False
 
     def parse_timestamp(self, data, stats=None):
+        """
+        Parse received packet from timestamp socket
+        :param data: Packet Data
+        :param stats: Statistics object
+        :return: True on success, False on error
+        """
         if str(data[0:6], 'utf-8') != self.HEADER:
             return False
         packet = data[10]
@@ -266,16 +272,16 @@ class Protocol:
         :return: True if received packet has correct length
         """
         idx = payload[0]
-        flags = payload[1]
         nb_data = struct.unpack("<H", payload[2:4])[0]
-        total = struct.unpack("<H", payload[4:6])[0]
         offset = struct.unpack("<H", payload[6:8])[0]
+        revCnt = struct.unpack("<L", payload[8:12])[0]
         data = list(struct.unpack('%sH' % nb_data, payload[16:]))
 
         if len(payload) >= 16 + nb_data * 2:
+            # Pass logger data into statistics
             if stats is not None:
-                stats.logger.extend(data)
-            ret = {"idx": idx, "flags": flags, "nb of data": nb_data, "offset": offset}
+                stats.new_logger(idx, offset, revCnt, data)
+            ret = {"idx": idx, "offset": offset, "revolution": revCnt}
             logging.debug(ret)
             return True
         return None

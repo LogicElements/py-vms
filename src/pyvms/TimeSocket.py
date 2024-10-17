@@ -45,14 +45,16 @@ class TimeSocket:
             self.ss.close()
         self.ss = None
 
-    def receive_loop(self, time=60, stats=None):
+    def receive_loop(self, time=60, stats=None, data=None):
         """
         Reception loop for timestamp data
         :param time: Reception time in seconds
         :param stats: Timestamp statistics object
+        :param data: previously received data
         :return: None
         """
-        data = bytearray([])
+        if data is None:
+            data = bytearray([])
         # Iterate until end time
         end_time = datetime.datetime.now() + datetime.timedelta(seconds=time)
         while self.activity < end_time:
@@ -68,7 +70,8 @@ class TimeSocket:
                 ret = self.pro.check_length(data)
                 if ret:
                     # Correct packet, parse content
-                    self.pro.parse_timestamp(data, stats)
                     length = self.pro.get_length(data)
+                    self.pro.parse_timestamp(data[:length], stats)
                     data = data[length:]
-
+        # Return remaining data
+        return data

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyvms"
 description = "Python module for Vibration Monitoring System by Logic Elements"
-version = "0.1.2"
+version = "0.1.4"
 authors = [
   { name="Jan Bartovský", email="jan.bartovsky@logicelements.cz" },
 ]

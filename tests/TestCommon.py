@@ -2,6 +2,8 @@ import random
 import time
 from time import sleep
 
+import matplotlib.pyplot as plt
+
 # Import pyvms
 from src.pyvms import *
 
@@ -58,18 +60,41 @@ class TestCommon:
         self.time.close()
         self.conf.listen(self.conf_port)
 
-    def get_logger(self, meas_time=0.1, fe_addr=16, synced=False):
+    def get_logger(self, meas_time=None, fe_addr=16, synced=False, count=1):
         """
         Get logger data with given measure period.
         :param meas_time: Measure period for logger
         :param fe_addr: FE card address
         :param synced: Synchronization of logger with PM
+        :param count: Number of loggers
         :return Avg, max, min statistics of logger
         """
-        divider = int(1e8 * meas_time / 1024)
-        self.conf.write_fe(fe_addr, Fe.LOG_DIVIDER, divider)
-        self.stats = TimeStats()
-        self.time.receive_loop(0.1)
-        self.conf.write_fe(fe_addr, Fe.CONTROL_1_LOGGER, 3 if synced else 1)
-        self.time.receive_loop(max(meas_time * 2, 0.5), self.stats)
-        self.conf.send_keep()
+        # Compute and write logger divider
+        if meas_time is not None:
+            divider = int(1e8 * meas_time / 1024)
+            self.conf.write_fe(fe_addr, Fe.LOG_DIVIDER, divider)
+
+        # Request logger
+        self.conf.request_logger(1 << (fe_addr - 1), synced, count)
+
+        # Receive data for expected amount of time, keep configuration socket alive
+        tot_time = max(0.020 * count + 0.5, 1)
+        data = None
+        while tot_time:
+            time_this = min(1.0, tot_time)
+            # Receive loop
+            data = self.time.receive_loop(time_this, self.stats, data)
+            self.conf.send_keep()
+            tot_time -= time_this
+
+    def print_logger_map(self):
+        """
+        Print a image map of all loggers
+        :return: None
+        """
+        plt.figure(figsize=(20, 10), dpi=80)
+        plot = plt.imshow(self.stats.image)
+        plt.colorbar(plot)
+        plt.legend('', frameon=False)
+        plt.savefig('pixel_plot.png')
+        # plt.show()

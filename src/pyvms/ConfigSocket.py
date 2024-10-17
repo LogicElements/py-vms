@@ -4,6 +4,7 @@ import logging
 import struct
 from time import sleep
 from .Protocol import Protocol
+from .Regs import *
 
 # Coefficient of FE ADC
 FADC = 0.0004884
@@ -225,7 +226,19 @@ class ConfigSocket:
         while not ret:
             resp += self.sock.recv(2048)
             ret = self.pro.check_length(resp)
-        ret = self.pro.parse_resp(resp)
+        ret = self.pro.parse_config(resp)
         return ret
 
-
+    def request_logger(self, channels, pm=True, count=1):
+        """
+        Request logger via Master FPGA internal logic
+        :param channels: Bitmap of channels to log
+        :param pm: Flag for PM synchronization
+        :param count: Number of consecutive loggers to take
+        :return: True on success, False on error
+        """
+        count = max(count - 1, 0)
+        value = (count << 20)
+        value += (1 << 16) if pm else 0
+        value += channels & 0xFFFF
+        return self.write_master(VmsRegsMaster.CHANNEL_LOGGER, value)

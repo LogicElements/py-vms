@@ -1,8 +1,8 @@
 import datetime
 import mysql.connector
 from collections import Counter
-from matplotlib import pyplot as plt
-import matplotlib.dates as mdates
+# from matplotlib import pyplot as plt
+# import matplotlib.dates as mdates
 
 
 class DbMysql:
@@ -68,6 +68,7 @@ class DbMysql:
                 if cursor.rowcount != limit:
                     print(f"Wrong affected row count {cursor.rowcount}. Expected {limit} rows.")
 
+        cursor.close()
         return result
 
     def plot_events(self, sys_id=101, last=0):
@@ -97,14 +98,14 @@ class DbMysql:
             for time in lst:
                 x.append(time)
                 y.append(idx)
-        plt.figure(f"Diagnostic events for system {sys_id}", figsize=(12, 6))
-        plt.title(f"Diagnostic events for VMS system ID {sys_id}")
-        plt.ylim((-1, len(cnt)))
-        plt.yticks(range(len(cnt)), [a for a in cnt])
-        plt.scatter(x, y, color='r', s=70)
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
-        plt.gcf().autofmt_xdate()
-        plt.show()
+        # plt.figure(f"Diagnostic events for system {sys_id}", figsize=(12, 6))
+        # plt.title(f"Diagnostic events for VMS system ID {sys_id}")
+        # plt.ylim((-1, len(cnt)))
+        # plt.yticks(range(len(cnt)), [a for a in cnt])
+        # plt.scatter(x, y, color='r', s=70)
+        # plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+        # plt.gcf().autofmt_xdate()
+        # plt.show()
         return res
 
     def speed_check(self, rpm=3000, tol=1.05, suffix=""):

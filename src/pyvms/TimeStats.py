@@ -1,6 +1,8 @@
 import logging
 import collections
 
+import numpy as np
+
 # Coefficient of FE ADC
 FADC = 0.0004884
 
@@ -10,6 +12,8 @@ class TimeStats:
     Class for gathering simple statistics of timestamp data (data are dropped) and a vector of
     logger data.
     """
+
+    EMPTY_LOG = np.array([[0.0]*1023])
 
     def __init__(self):
         self.idx = 0
@@ -29,7 +33,10 @@ class TimeStats:
         self.logger = []
         self.logger_revolution = 0
         self.logger_skipped = 0
-        self.image = []
+        self.image = self.EMPTY_LOG
+        self.buffer = np.array([[0]])
+        self.im_dif = []
+        self.line_avg = []
         self.line = None
 
     def append_to_stats(self, idx=0, rev_cnt=0, pm=0, blades=0):
@@ -115,7 +122,10 @@ class TimeStats:
             # Append data
             if self.line is not None:
                 self.line.extend(data)
-                self.image.append(self.line)
+                if len(self.buffer[0]) != 1024:
+                    self.buffer = np.array([self.line])
+                else:
+                    self.buffer = np.append(self.buffer, [self.line], axis=0)
                 self.line = None
             else:
                 logging.error("Received second data into empty line buffer")
@@ -126,12 +136,25 @@ class TimeStats:
         :param count_exp: Expected revolution count
         :return: Errors via logging
         """
-        for i in range(len(self.image) - 1):
-            if collections.Counter(self.image[i]) == collections.Counter(self.image[i+1]):
+        for i in range(len(self.buffer) - 1):
+            if collections.Counter(self.buffer[i]) == collections.Counter(self.buffer[i+1]):
                 logging.error(f"Two loggers seems to be the same at index {i} and {i+1}")
 
         if self.logger_skipped != 0:
             logging.error(f"Skipped {self.logger_skipped} logs")
 
-        if count_exp is not None and count_exp != len(self.image):
-            logging.error(f"Wrong number of loggers. Expected {count_exp}, got {len(self.image)}")
+        if count_exp is not None and count_exp != len(self.buffer):
+            logging.error(f"Wrong number of loggers. Expected {count_exp}, got {len(self.buffer)}")
+
+    def image_limit(self, limit=1000):
+        """
+        Limit the length of image buffer
+        :param limit: Number of most recent entries to keep
+        :return: None
+        """
+        if len(self.buffer) > limit:
+            self.buffer = self.buffer[-limit:]
+
+        self.line_avg = np.sum(self.buffer, axis=0) / len(self.buffer)
+
+        self.image = self.buffer - self.line_avg

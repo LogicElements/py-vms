@@ -1,5 +1,6 @@
 import random
 import time
+import datetime
 from time import sleep
 
 import matplotlib.pyplot as plt
@@ -14,6 +15,7 @@ class TestCommon:
     conf = None
     time = None
     stats = None
+    plot = None
 
     conf_port = 30001
     time_port = 30000
@@ -60,7 +62,7 @@ class TestCommon:
         self.time.close()
         self.conf.listen(self.conf_port)
 
-    def get_logger(self, meas_time=None, fe_addr=16, synced=False, count=1):
+    def get_logger(self, meas_time=None, fe_addr=16, synced=False, count=1, update=False):
         """
         Get logger data with given measure period.
         :param meas_time: Measure period for logger
@@ -79,22 +81,25 @@ class TestCommon:
 
         # Receive data for expected amount of time, keep configuration socket alive
         tot_time = max(0.020 * count + 0.5, 1)
+        end_time = datetime.datetime.now() + datetime.timedelta(seconds=tot_time)
         data = None
-        while tot_time:
-            time_this = min(1.0, tot_time)
+        while end_time > datetime.datetime.now():
             # Receive loop
-            data = self.time.receive_loop(time_this, self.stats, data)
+            data = self.time.receive_loop(0.1, self.stats, data)
             self.conf.send_keep()
-            tot_time -= time_this
+            if update:
+                self.stats.image_limit(limit=100)
+                self.plot = plt.imshow(self.stats.image)
+                plt.pause(0.05)
 
     def print_logger_map(self):
         """
         Print a image map of all loggers
         :return: None
         """
-        plt.figure(figsize=(20, 10), dpi=80)
-        plot = plt.imshow(self.stats.image)
-        plt.colorbar(plot)
-        plt.legend('', frameon=False)
-        plt.savefig('pixel_plot.png')
-        # plt.show()
+        plt.figure(figsize=(10, 5), dpi=150)
+        self.plot = plt.imshow(self.stats.image)
+        plt.colorbar(self.plot)
+        # plt.legend('', frameon=False)
+        # plt.savefig('pixel_plot.png')
+        plt.pause(0.05)

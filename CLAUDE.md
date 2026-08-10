@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-`pyvms` is a Python client library for Logic Elements' Vibration Monitoring System (VMS-1201) hardware. It implements the VMS wire protocol (TCP config/telemetry sockets, UDP discovery), plus a MySQL-backed test-and-monitoring layer used to watch deployed VMS installations and report health metrics to Zabbix.
+`pyvms` is a Python client library for Logic Elements' Vibration Monitoring System (VMS-1201) hardware. It implements the VMS wire protocol (TCP config/telemetry sockets, UDP discovery), plus a MySQL read-back helper (`DbMySql.py`) used for closed-loop testing and as the database layer for the separate [`vms-zabbix-agent`](https://github.com/LogicElements/py-vms-zabbix) monitoring package.
 
 The package lives under `src/pyvms` (src-layout) and is published to PyPI as `pyvms`.
 
@@ -32,8 +32,6 @@ py -m twine upload dist/*   # publish to PyPI
 
 ## Architecture
 
-The codebase has two mostly-independent halves living in the same package: the **VMS communication protocol** (the published library's main purpose) and a **Zabbix monitoring agent** (an in-progress Windows service, not yet wired into `pyvms/__init__.py` or `pyproject.toml` dependencies).
-
 ### VMS communication protocol (`Protocol.py`, `ConfigSocket.py`, `TimeSocket.py`, `Regs.py`, `TimeStats.py`, `Discovery.py`, `Crc32.py`)
 
 The device exposes two independent TCP connections plus a UDP discovery protocol, all defined by the same custom binary framing in `Protocol.py`: a 6-byte `"LEBVMS"` header, a 4-byte serial number, a 1-byte packet-type ID, a 1-byte sequence ID, a 4-byte length, then payload. `Protocol` is a shared, stateful helper (not a socket itself) used by both socket classes to build outgoing packets and parse incoming ones.
@@ -44,14 +42,11 @@ The device exposes two independent TCP connections plus a UDP discovery protocol
 - **Regs.py** is purely address maps (`VmsRegsMcu`, `VmsRegsMaster`, `VmsRegsFe`) — these constants are the `address` arguments passed into `ConfigSocket.read_*`/`write_*`; there's no logic here, just the register layout contract with the firmware.
 - **Discovery.py** is a separate, self-contained UDP broadcast protocol (distinct from the TCP protocol above — different packet format, default port 4455) for finding VMS devices on the local network and reconfiguring their server IP / socket ports before the TCP protocol can be used. It also exposes a CLI (`discovery_main`, uses `argparse`) for standalone use.
 
-### Zabbix monitoring agent (`ZabAgent.py`, `ZabConfig.py`, `ZabSender.py`, `DbMySql.py`)
+### Database read-back (`DbMySql.py`)
 
-This is a separate subsystem that watches a MySQL database (`BVMS`) which VMS server software writes into, and forwards derived health metrics to Zabbix. It is unfinished/experimental relative to the rest of the package:
-- It uses plain module-level imports (`from DbMySql import *`, `import ZabConfig as Cfg`) rather than the relative imports (`from .Protocol import Protocol`) used everywhere else, so `ZabAgent.py` is meant to be run as a script from inside `src/pyvms/`, not imported through the `pyvms` package.
-- Its dependencies — `pywin32` (`win32serviceutil`, `win32service`, `servicemanager`), `jsonpickle`, `zabbix_utils` — are not declared in `pyproject.toml`.
-- `ZabAgent.ZabAgentFrame` is a `pywin32` Windows Service (name `ZabAgent`) wrapping `ZabAgent` (the actual polling loop); running the file directly with no args runs the same loop as a plain foreground script instead of installing/starting the service.
-- Flow: `ZabConfig.Config` (a plain object graph of MySQL/Zabbix connection info plus a list of monitored `Generator`s, each pinned to a `system_id` and pair of buffer table names) round-trips to JSON via `jsonpickle` at `src/pyvms/data/config_default.json`. On each poll cycle, `DbMysql` (wraps `mysql.connector`) reads the `info_le` row and `buffer_le*` table row-counts/update-times for each configured generator, `ZabSender.ZabItems` packages the derived metrics (speed, buffer/config/timestamp ages, buffer bulk sizes), and `ZabSender.send()` pushes them to Zabbix as trapper items (`vms.speed`, `vms.buf_rows_1`, etc.) via `zabbix_utils.Sender`.
-- `DbMysql` also has standalone test-harness methods unrelated to the agent (`speed_check`, `plot_events`) used for closed-loop VMS testing by reading back what the VMS server wrote to `buffer_le`.
+`DbMysql` wraps `mysql.connector` to read back data that VMS server software writes into a MySQL database (`BVMS`) — the `info_le` row and `buffer_le*` table row-counts/update-times. It is not exported from `pyvms/__init__.py` (import it directly as `pyvms.DbMySql.DbMysql`), and has two unrelated uses:
+- Standalone test-harness methods (`speed_check`, `plot_events`) used for closed-loop VMS testing.
+- The database layer for the separate [`vms-zabbix-agent`](https://github.com/LogicElements/py-vms-zabbix) package (`ZabAgent`/`ZabConfig`/`ZabSender`, formerly `src/pyvms/ZabAgent.py` etc. in this repo), which depends on `pyvms` and polls this class to report VMS health metrics to Zabbix. That package's `ZabAgent.ZabAgentFrame` is a `pywin32` Windows Service; see its own README for details.
 
 ## Testing notes
 

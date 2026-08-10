@@ -1,4 +1,4 @@
-import datetime
+from datetime import *
 import mysql.connector
 from collections import Counter
 # from matplotlib import pyplot as plt
@@ -12,17 +12,20 @@ class DbMysql:
     def __init__(self):
         self.db = None
 
-    def connect(self, host='localhost'):
+    def connect(self, host='localhost', database='BVMS', user='VMS', password='Vms2015'):
         """
         Connect to mysql database containing instance of le_buffer table
+        :param password: Password for mysql database
+        :param user: User for mysql database
+        :param database: Mysql database
         :param host: Server to connect, e.g., loacalhost, 192.168.1.7
         :return: None
         """
         self.db = mysql.connector.connect(
             host=host,
-            user="VMS",
-            passwd="Vms2015",
-            database="BVMS"
+            user=user,
+            passwd=password,
+            database=database
         )
 
     def close(self):
@@ -33,6 +36,36 @@ class DbMysql:
         self.db.close()
         self.db = None
 
+    def get_info(self, info, sys_id, return_columns=False):
+        """
+        Get row from information table for given system
+        :param info: Information table name
+        :param sys_id: System ID
+        :param return_columns: Return column names as well
+        :return: List of row values + optionally column names
+        """
+        cursor = self.db.cursor()
+        cursor.execute(f"SELECT * FROM `{info}` WHERE `SystemId` = {sys_id}")
+        result = cursor.fetchall()[0]
+        cursor.close()
+        if return_columns:
+            return result, cursor.column_names
+        else:
+            return result
+
+    def get_table_details(self, database):
+        """
+        Get details on tables
+        :param database: Database name
+        :return: Return 2d array of table name, rows and update time for all tables
+        """
+        cursor = self.db.cursor()
+        cursor.execute(f"SELECT TABLE_NAME, TABLE_ROWS, UPDATE_TIME FROM information_schema.TABLES WHERE "
+                       f"TABLE_SCHEMA=\"{database}\"")
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
     def truncate_buffer(self, suffix=""):
         """
         Truncate buffer_le table
@@ -42,6 +75,8 @@ class DbMysql:
         cursor = self.db.cursor()
         sql = "TRUNCATE TABLE buffer_le" + suffix
         cursor.execute(sql)
+        self.db.commit()
+        cursor.close()
 
     def iterate(self, sql, commit=0, suffix=""):
         """
@@ -139,7 +174,7 @@ def in_tolerance(val1, val2, tol, msg=""):
 
 
 if __name__ == "__main__":
-    print(f"=== START === " + datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S ==="))
+    print(f"=== START === " + datetime.now().strftime("%y/%m/%d %H:%M:%S ==="))
     err = 0
 
     mydb = DbMysql()
@@ -147,7 +182,7 @@ if __name__ == "__main__":
     err += mydb.speed_check()
     mydb.close()
 
-    print(f"=== END === " + datetime.datetime.now().strftime("%y/%m/%d %H:%M:%S ==="))
+    print(f"=== END === " + datetime.now().strftime("%y/%m/%d %H:%M:%S ==="))
     print('=== RESULT === {} === '.format('SUCCESS' if err == 0 else '{} ERRORS'.format(err)))
 
 

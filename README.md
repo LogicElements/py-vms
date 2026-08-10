@@ -126,7 +126,7 @@ See [`how_to_build.md`](how_to_build.md) for the full setup, including creating 
 
 ## Additional tools
 
-The repository also contains an experimental Zabbix monitoring agent (`ZabAgent.py`, `ZabConfig.py`, `ZabSender.py`, `DbMySql.py`) used internally to watch deployed VMS installations via a MySQL database and report health metrics to Zabbix. It is not part of the public `pyvms` API, runs as a standalone script or Windows service, and needs its own dependencies (`pywin32`, `jsonpickle`, `zabbix_utils`) installed separately.
+`DbMySql.py` reads back data that VMS server software writes into a MySQL database (`BVMS`) — it's used for closed-loop VMS testing and as the database layer for the separate [`vms-zabbix-agent`](https://github.com/LogicElements/py-vms-zabbix) package, which depends on `pyvms` and reports VMS health metrics to Zabbix. It is not part of the public `pyvms` API surface (not exported from `pyvms/__init__.py`).
 
 ## License
 

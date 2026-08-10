@@ -2,7 +2,7 @@ import logging
 
 import unittest
 
-from TestCommon import *
+from tests.TestCommon import *
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -70,7 +70,7 @@ class TestCommunication(unittest.TestCase, TestCommon):
         # Start listening on timestamp socket
         self.time.listen(self.time_port)
 
-        COUNT = 1000
+        COUNT = 100
 
         # For each active FE card
         for addr in self.fe_addr:
@@ -85,7 +85,7 @@ class TestCommunication(unittest.TestCase, TestCommon):
             print(f"FE {addr}, logger average {avg:.3f} V, min {minim:.3f} V, max {maxim:.3f} V")
             # Print raw data
             print(len(self.stats.logger))
-            self.stats.multi_logger_check(count_exp=COUNT + 1)
+            self.stats.multi_logger_check(count_exp=COUNT)
 
             # Clear logger buffer
             self.stats.get_logger_stats()

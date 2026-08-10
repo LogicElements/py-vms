@@ -6,17 +6,6 @@
 
 Python client library for communicating with Logic Elements **VMS-1201** Vibration Monitoring System devices: register read/write, continuous timestamp/logger data streaming, firmware update, and network discovery.
 
-## Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Quick start](#quick-start)
-- [Register maps](#register-maps)
-- [Testing](#testing)
-- [Development](#development)
-- [Additional tools](#additional-tools)
-- [License](#license)
-
 ## Features
 
 - Read/write MCU, Master FPGA and per-channel Frontend FPGA registers over TCP
@@ -94,16 +83,6 @@ conf.update_firmware("mcu_firmware.bin", target=Protocol.FW_MCU, mask=0)
 conf.close()
 ```
 
-## Register maps
-
-Register addresses for the three configurable targets are exposed as class constants, used as the `address` argument to `ConfigSocket.read_*` / `write_*`:
-
-| Constant | Target |
-| --- | --- |
-| `Mcu` | Main MCU registers |
-| `Master` | Master FPGA registers |
-| `Fe` | Per-channel Frontend FPGA registers (card address 1–16) |
-
 ## Testing
 
 Tests use `unittest` and require a real VMS-1201 device on the network — the test process listens on the configuration/timestamp TCP ports and waits for the device to connect, so they cannot run standalone or in CI without hardware. They also depend on an internal Logic Elements package (`lecore`) not published with `pyvms`.
@@ -123,10 +102,6 @@ py -m twine upload dist/*
 ```
 
 See [`how_to_build.md`](how_to_build.md) for the full setup, including creating a virtual environment.
-
-## Additional tools
-
-`DbMySql.py` reads back data that VMS server software writes into a MySQL database (`BVMS`) — it's used for closed-loop VMS testing and as the database layer for the separate [`vms-zabbix-agent`](https://github.com/LogicElements/py-vms-zabbix) package, which depends on `pyvms` and reports VMS health metrics to Zabbix. It is not part of the public `pyvms` API surface (not exported from `pyvms/__init__.py`).
 
 ## License
 

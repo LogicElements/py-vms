@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyvms"
 description = "Python module for Vibration Monitoring System by Logic Elements"
-version = "0.1.4"
+version = "0.1.5"
 authors = [
   { name="Jan Bartovský", email="jan.bartovsky@logicelements.cz" },
 ]
@@ -21,9 +21,9 @@ keywords = ["logicelements", "vibration", "vms"]
 
 requires-python = ">=3.7"
 dependencies = [
-    "pyserial",
-    'mysql-connector',
-    "unittest-xml-reporting"]
+    "numpy",
+    "mysql-connector",
+]
 
 [project.optional-dependencies]
 extra = [
@@ -38,12 +38,6 @@ where = ["src"]
 
 [tool.setuptools]
 include-package-data = true
-
-#[tool.setuptools.package-data]
-#"lecore.Devices.RtdEmul" = ["*.json"]
-#"lecore.Devices.VmsRtd" = ["*.json"]
-#"lecore.Devices.PhaseDet" = ["*.json"]
-#"lecore.Devices.Rftb" = ["*.json"]
 
 [project.urls]
 "Homepage" = "https://github.com/LogicElements/py-vms"

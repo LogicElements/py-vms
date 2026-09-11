@@ -26,7 +26,7 @@ Optional extra (adds `matplotlib`, used when plotting logger data):
 pip install pyvms[extra]
 ```
 
-Requires Python >= 3.7.
+Requires Python >= 3.12.
 
 ## Quick start
 

@@ -1,44 +1,47 @@
 # Build [note to myself]
 
-In command line (not venv) run:
+Everything runs from the virtual environment in `.venv`; `build.bat` refuses to run without it.
 
-Update PIP, build, twine
-```
-python -m pip install --upgrade build
-python -m pip install --upgrade pip
-python -m pip install --upgrade twine
-```
+## Set up the virtual environment
 
-Run Build
-````
-py -m build
-````
-
-
-Upload package to pypi.org server
-
-```
-py -m twine upload dist/*
-```
-
-# venv
-
-Enable activating venv
+Allow activating a venv (once per machine):
 
 ```
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-Create and activate venv
-```
-py -m venv .\venv --clear
-.\venv\Scripts\activate
-```
-
-Download package and run tests
+Create it and install the package with the build and test tooling:
 
 ```
-pip install lecore
-py .\tests\test_phase_det.py
+py -3.14 -m venv .venv
+.venv\Scripts\python -m pip install --upgrade pip
+.venv\Scripts\python -m pip install -e . build twine lecore
 ```
 
+`lecore` is only needed by the hardware tests and is deliberately not in `pyproject.toml`.
+
+## Run the tests
+
+```
+.venv\Scripts\python -m unittest tests.TestDbMySql        # standalone, no device or database
+.venv\Scripts\python -m unittest tests.TestCommunication  # needs a real VMS device
+```
+
+## Build and publish
+
+```
+build.bat
+```
+
+It wipes `dist/` and `Log/`, builds the sdist and wheel with the interpreter from `.venv`, and
+then uploads to PyPI. The upload is the last step and is **not** confirmed, so running the
+script publishes the version in `pyproject.toml`. A failed build aborts before the upload.
+
+To build without publishing, or to publish something already built:
+
+```
+.venv\Scripts\python -m build
+.venv\Scripts\python -m twine upload dist/*
+```
+
+Twine asks for credentials unless an API token is stored in `%USERPROFILE%\.pypirc`.

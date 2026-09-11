@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyvms"
 description = "Python module for Vibration Monitoring System by Logic Elements"
-version = "0.1.5"
+version = "0.2.0"
 authors = [
   { name="Jan Bartovský", email="jan.bartovsky@logicelements.cz" },
 ]
@@ -22,7 +22,7 @@ keywords = ["logicelements", "vibration", "vms"]
 requires-python = ">=3.7"
 dependencies = [
     "numpy",
-    "mysql-connector",
+    "mysql-connector-python",
 ]
 
 [project.optional-dependencies]

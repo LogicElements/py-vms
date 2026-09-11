@@ -85,7 +85,13 @@ conf.close()
 
 ## Testing
 
-Tests use `unittest` and require a real VMS-1201 device on the network — the test process listens on the configuration/timestamp TCP ports and waits for the device to connect, so they cannot run standalone or in CI without hardware. They also depend on an internal Logic Elements package (`lecore`) not published with `pyvms`.
+The database layer has unit tests that fake the MySQL driver, so they need neither hardware nor a server:
+
+```bash
+python -m unittest tests.TestDbMySql
+```
+
+The protocol tests require a real VMS-1201 device on the network — the test process listens on the configuration/timestamp TCP ports and waits for the device to connect, so they cannot run standalone or in CI without hardware. They also depend on an internal Logic Elements package (`lecore`) not published with `pyvms`.
 
 ```bash
 python -m unittest tests.TestCommunication

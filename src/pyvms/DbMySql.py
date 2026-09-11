@@ -24,7 +24,7 @@ class DbMysql:
         self.db = mysql.connector.connect(
             host=host,
             user=user,
-            passwd=password,
+            password=password,
             database=database
         )
 
@@ -36,20 +36,28 @@ class DbMysql:
         self.db.close()
         self.db = None
 
-    def get_info(self, info, sys_id, return_columns=False):
+    def get_info(self, info, sys_id, return_columns=False, as_dict=False):
         """
-        Get row from information table for given system
+        Get row from information table for given system.
+        A system with no row in the table is not an error, None is returned for it.
         :param info: Information table name
         :param sys_id: System ID
-        :param return_columns: Return column names as well
-        :return: List of row values + optionally column names
+        :param return_columns: Return column names as well (no effect when as_dict is set)
+        :param as_dict: Return the row as a dict keyed by column name instead of a tuple
+        :return: Row values, or None when the system has no row. With return_columns
+                 a tuple of (row, column names) is returned instead.
         """
-        cursor = self.db.cursor()
+        cursor = self.db.cursor(dictionary=as_dict)
         cursor.execute(f"SELECT * FROM `{info}` WHERE `SystemId` = {sys_id}")
-        result = cursor.fetchall()[0]
+        rows = cursor.fetchall()
+        # Read column names before the cursor is closed, they are gone afterwards
+        column_names = cursor.column_names
         cursor.close()
+        result = rows[0] if rows else None
+        if as_dict:
+            return result
         if return_columns:
-            return result, cursor.column_names
+            return result, column_names
         else:
             return result
 

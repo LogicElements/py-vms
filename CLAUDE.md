@@ -12,16 +12,26 @@ The package lives under `src/pyvms` (src-layout) and is published to PyPI as `py
 
 Install for local development (editable):
 ```
+pip uninstall -y mysql-connector   # the obsolete package, it shares the mysql.connector namespace
 pip install -e .
 pip install -e .[extra]   # adds matplotlib, needed for tests/TestCommon.py plotting
 ```
+The MySQL driver is `mysql-connector-python` (Oracle's maintained package). The abandoned
+`mysql-connector` installs into the same `mysql/connector` directory, so having both in one
+environment yields a broken mix — uninstall it before installing this package.
 
 Run tests (unittest-based, not pytest):
 ```
-python -m unittest tests.TestCommunication
+python -m unittest tests.TestDbMySql        # standalone, no device and no database needed
+python -m unittest tests.TestCommunication  # needs a real VMS device, see below
 python -m unittest tests.TestCommunication.TestCommunication.test001_get_fe_cards   # single test
 ```
-Note: `tests/` requires a real VMS device on the network (the test process opens listening TCP sockets on ports 30000/30001 and waits for the device to connect — see "Testing" below) and an internal `lecore` package that is not declared in `pyproject.toml`. These tests cannot run standalone/headless.
+Note: `tests.TestCommunication` requires a real VMS device on the network (the test process opens listening TCP sockets on ports 30000/30001 and waits for the device to connect — see "Testing" below) and an internal `lecore` package that is not declared in `pyproject.toml`; it cannot run standalone/headless, which also rules out plain `unittest discover`. `tests.TestDbMySql` is the exception — it fakes the driver and runs anywhere.
+
+Check a real database by hand after changing the MySQL driver (needs a reachable server):
+```
+python tests/SmokeDbMySql.py --host 10.0.0.1 --user VMS --password *** --system-id 101
+```
 
 Build and publish package (see `how_to_build.md`, `build.bat`):
 ```
@@ -44,7 +54,7 @@ The device exposes two independent TCP connections plus a UDP discovery protocol
 
 ### Database read-back (`DbMySql.py`)
 
-`DbMysql` wraps `mysql.connector` to read back data that VMS server software writes into a MySQL database (`BVMS`) — the `info_le` row and `buffer_le*` table row-counts/update-times. It is not exported from `pyvms/__init__.py` (import it directly as `pyvms.DbMySql.DbMysql`), and has two unrelated uses:
+`DbMysql` wraps `mysql.connector` to read back data that VMS server software writes into a MySQL database (`BVMS`) — the `info_le` row and `buffer_le*` table row-counts/update-times. `get_info` returns `None` for a system that has no row (a missing row is not an error, the caller decides what it means) and with `as_dict=True` returns the row keyed by column name instead of by position. It is not exported from `pyvms/__init__.py` (import it directly as `pyvms.DbMySql.DbMysql`), and has two unrelated uses:
 - Standalone test-harness methods (`speed_check`, `plot_events`) used for closed-loop VMS testing.
 - The database layer for the separate [`vms-zabbix-agent`](https://github.com/LogicElements/py-vms-zabbix) package (`ZabAgent`/`ZabConfig`/`ZabSender`, formerly `src/pyvms/ZabAgent.py` etc. in this repo), which depends on `pyvms` and polls this class to report VMS health metrics to Zabbix. That package's `ZabAgent.ZabAgentFrame` is a `pywin32` Windows Service; see its own README for details.
 

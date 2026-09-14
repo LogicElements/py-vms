@@ -1,14 +1,26 @@
+import os
 import random
 import time
+import logging
 import datetime
+import unittest
 from time import sleep
 
-import matplotlib.pyplot as plt
-
 # Import pyvms
-from src.pyvms import *
+from pyvms import *
 
 from lecore.TestFrame import *
+
+
+def pyplot():
+    """
+    Import pyplot on first use. Matplotlib is an optional dependency of pyvms (the "extra"
+    group) and only the plotting helpers need it, so importing it at module level would make
+    the whole test suite uncollectable without it.
+    :return: The matplotlib.pyplot module
+    """
+    import matplotlib.pyplot as plt
+    return plt
 
 
 class TestCommon:
@@ -19,6 +31,24 @@ class TestCommon:
 
     conf_port = 30001
     time_port = 30000
+
+    # Broadcast address the VMS device is discovered on
+    broadcast = os.environ.get("VMS_BROADCAST", "10.0.0.255")
+
+    @classmethod
+    def skip_without_device(cls):
+        """
+        Skip the whole test case unless a VMS device answers discovery. Hardware tests wait for
+        the device to dial in, so without one they would only time out several minutes later.
+        :return: None, raises unittest.SkipTest when no device answers
+        """
+        devices = Discovery(broadcast=cls.broadcast).probe(timeout=2)
+        if not devices:
+            raise unittest.SkipTest(
+                f"No VMS device answered discovery on {cls.broadcast}. "
+                f"Set VMS_BROADCAST if the device is on a different network."
+            )
+        logging.info(f"Discovered {devices}")
 
     @classmethod
     def class_setup(cls):
@@ -89,6 +119,7 @@ class TestCommon:
             self.conf.send_keep()
             if update:
                 self.stats.image_limit(limit=100)
+                plt = pyplot()
                 self.plot = plt.imshow(self.stats.image)
                 plt.pause(0.05)
 
@@ -97,6 +128,7 @@ class TestCommon:
         Print a image map of all loggers
         :return: None
         """
+        plt = pyplot()
         plt.figure(figsize=(10, 5), dpi=150)
         self.plot = plt.imshow(self.stats.image)
         plt.colorbar(self.plot)

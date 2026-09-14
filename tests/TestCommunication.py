@@ -18,6 +18,7 @@ class TestCommunication(unittest.TestCase, TestCommon):
 
     @classmethod
     def setUpClass(cls):
+        cls.skip_without_device()
         cls.class_setup()
 
     def setUp(self):
@@ -78,7 +79,7 @@ class TestCommunication(unittest.TestCase, TestCommon):
             # Receive Timestamp for some time to drop all buffered data
             self.time.receive_loop(1)
             # Show image
-            self.print_logger_map()
+            # self.print_logger_map()
             # Get logger and basic statistics
             self.get_logger(fe_addr=addr, synced=True, count=COUNT, update=True)
             avg, maxim, minim = self.stats.get_logger_stats(clear=False)

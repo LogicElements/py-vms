@@ -85,17 +85,17 @@ conf.close()
 
 ## Testing
 
-The database layer has unit tests that fake the MySQL driver, so they need neither hardware nor a server:
+The whole suite runs with one command:
 
 ```bash
-python -m unittest tests.TestDbMySql
+python -m unittest discover -s tests -t . -p "Test*.py"
 ```
 
-The protocol tests require a real VMS-1201 device on the network — the test process listens on the configuration/timestamp TCP ports and waits for the device to connect, so they cannot run standalone or in CI without hardware. They also depend on an internal Logic Elements package (`lecore`) not published with `pyvms`.
-
-```bash
-python -m unittest tests.TestCommunication
-```
+The database tests fake the MySQL driver, so they need neither hardware nor a server. The
+protocol tests need a real VMS-1201 device on the network: they look for it over UDP discovery
+first and skip themselves when none answers, so the suite stays green on a machine without
+hardware. Set `VMS_BROADCAST` when the device is on another network (default `10.0.0.255`).
+They also need an internal Logic Elements package (`lecore`) that is not published with `pyvms`.
 
 ## Development
 

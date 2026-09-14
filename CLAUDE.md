@@ -22,11 +22,15 @@ environment yields a broken mix — uninstall it before installing this package.
 
 Run tests (unittest-based, not pytest):
 ```
-python -m unittest tests.TestDbMySql        # standalone, no device and no database needed
-python -m unittest tests.TestCommunication  # needs a real VMS device, see below
+python -m unittest discover -s tests -t . -p "Test*.py"   # everything
+python -m unittest tests.TestDbMySql                      # just the standalone ones
 python -m unittest tests.TestCommunication.TestCommunication.test001_get_fe_cards   # single test
 ```
-Note: `tests.TestCommunication` requires a real VMS device on the network (the test process opens listening TCP sockets on ports 30000/30001 and waits for the device to connect — see "Testing" below) and an internal `lecore` package that is not declared in `pyproject.toml`; it cannot run standalone/headless, which also rules out plain `unittest discover`. `tests.TestDbMySql` is the exception — it fakes the driver and runs anywhere.
+The whole suite runs anywhere: `tests.TestDbMySql` fakes the MySQL driver, and
+`tests.TestCommunication` discovers the VMS device in `setUpClass` and skips itself when none
+answers, instead of waiting for a connection that never comes. Point it at another network with
+`VMS_BROADCAST` (default `10.0.0.255`). The hardware tests still need the internal `lecore`
+package, which is deliberately not declared in `pyproject.toml`.
 
 Check a real database by hand after changing the MySQL driver (needs a reachable server):
 ```
